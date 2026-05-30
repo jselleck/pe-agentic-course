@@ -37,7 +37,7 @@ Environment ready.
 ```
 
 If a check fails, the message tells you exactly what to fix:
-- Missing SDK → `pip install anthropic`
+- Missing SDKs → `pip install -r requirements.txt`
 - Missing key → `export ANTHROPIC_API_KEY=sk-ant-...`
 
 ---

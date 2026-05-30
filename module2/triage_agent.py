@@ -78,7 +78,7 @@ def run_agent() -> dict:
 
     if MOCK_MODE:
         print("[MOCK MODE] Skipping Claude API — returning pre-defined response.")
-        print("[MOCK MODE] Set ANTHROPIC_API_KEY and remove --mock to call the real API.\n")
+        print("[MOCK MODE] Set a provider API key and remove --mock to call the real API.\n")
         return MOCK_RESPONSE
 
     return ask(

@@ -109,7 +109,7 @@ def run_monitor(deployment: dict, gates: list) -> dict:
     """Evaluate deployment health and return rollback recommendation."""
     if MOCK_MODE:
         print("[MOCK MODE] Skipping Claude API — returning pre-defined rollback assessment.")
-        print("[MOCK MODE] Set ANTHROPIC_API_KEY and remove --mock to call the real API.\n")
+        print("[MOCK MODE] Set a provider API key and remove --mock to call the real API.\n")
         return MOCK_RESPONSE
 
     context = {

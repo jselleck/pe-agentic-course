@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'; MAGENTA='\033[0;35m'; RED='\033[0;31m'
 BOLD='\033[1m'; NC='\033[0m'
 
 MOCK_MODE=false
-[[ -z "$ANTHROPIC_API_KEY" ]] && MOCK_MODE=true
+[[ -z "$ANTHROPIC_API_KEY" && -z "$OPENAI_API_KEY" ]] && MOCK_MODE=true
 
 press_enter() {
   echo ""; echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -46,21 +46,23 @@ cmd "python3 --version"
 python3 --version
 echo ""
 
-cmd "python3 -c \"import anthropic; print('anthropic', anthropic.__version__)\""
-python3 -c "import anthropic; print('  ✓ anthropic', anthropic.__version__)" 2>/dev/null || {
-  warn "anthropic not installed. Install with: pip install anthropic"
+cmd "python3 -c \"import anthropic, openai; print('anthropic', anthropic.__version__); print('openai', openai.__version__)\""
+python3 -c "import anthropic, openai; print('  ✓ anthropic', anthropic.__version__); print('  ✓ openai', openai.__version__)" 2>/dev/null || {
+  warn "Required SDKs not installed. Install with: pip install -r requirements.txt"
   exit 1
 }
 echo ""
 
-note "Python 3 — runs all course exercises and the Claude API client"
-note "anthropic package — handles authentication and API calls to Claude"
+note "Python 3 — runs all course exercises and the model API client"
+note "anthropic/openai packages — handle authentication and model API calls"
 echo ""
 
 if $MOCK_MODE; then
-  warn "ANTHROPIC_API_KEY not set"
+  warn "ANTHROPIC_API_KEY and OPENAI_API_KEY not set"
   note "Demo will run in MOCK MODE (no API calls, pre-defined responses)"
-  note "To use the live API: export ANTHROPIC_API_KEY=sk-ant-..."
+  note "To use Anthropic: export ANTHROPIC_API_KEY=sk-ant-..."
+  note "To use OpenAI: export OPENAI_API_KEY=sk-... and AI_PROVIDER=openai"
+  note "To compare both: set both keys and export AI_PROVIDER=both"
   echo ""
 fi
 
@@ -85,9 +87,9 @@ echo ""
 press_enter
 
 # ────────────────────────────────────────────────────────────────────────────────
-section "THE CODE — Claude API Wrapper"
+section "THE CODE — Model API Wrapper"
 echo "Every module uses the same ask() function from shared/claude_client.py."
-echo "This is the ONLY file you don't touch — it wraps the Claude API into one call."
+echo "This is the ONLY file you don't touch — it wraps model API calls into one call."
 echo ""
 
 cmd "head -40 shared/claude_client.py"
@@ -95,8 +97,8 @@ head -40 shared/claude_client.py
 echo ""
 
 note "This function:"
-note "  • Loads your ANTHROPIC_API_KEY from the environment"
-note "  • Sends system prompt + user message to Claude"
+note "  • Loads ANTHROPIC_API_KEY or OPENAI_API_KEY from the environment"
+note "  • Sends system prompt + user message to the selected provider"
 note "  • Parses the JSON response automatically"
 note "  • Returns a Python dict ready to use"
 echo ""
@@ -124,7 +126,7 @@ press_enter
 # ────────────────────────────────────────────────────────────────────────────────
 if ! $MOCK_MODE; then
   section "LIVE API RUN"
-  echo "Your ANTHROPIC_API_KEY is set. Calling the real Claude API..."
+  echo "A provider API key is set. Calling the real model API..."
   echo ""
 
   cmd "python3 module1/hello_claude.py"
@@ -177,6 +179,8 @@ echo -e "${BOLD}Then test with the real API:${NC}"
 echo ""
 
 echo -e "${CYAN}    $ export ANTHROPIC_API_KEY=sk-ant-...${NC}"
+echo -e "${CYAN}    $ export OPENAI_API_KEY=sk-...     # optional alternative${NC}"
+echo -e "${CYAN}    $ export AI_PROVIDER=both          # optional comparison mode${NC}"
 echo -e "${CYAN}    $ python3 module1/agent.py${NC}"
 echo ""
 

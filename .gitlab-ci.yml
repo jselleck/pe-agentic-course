@@ -1,0 +1,247 @@
+image: python:3.12
+
+stages:
+  - agents
+  - demo_failure
+  - demo_triage
+  - capstone
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+.python_agent:
+  before_script:
+    - python --version
+    - python -m pip install --upgrade pip
+    - pip install -r requirements.txt
+    - |
+      if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$OPENAI_API_KEY" ]; then
+        export MOCK_MODE=1
+        echo "No provider API key set; running in MOCK_MODE=1"
+      else
+        export MOCK_MODE="${MOCK_MODE:-0}"
+        echo "Provider key detected; AI_PROVIDER=${AI_PROVIDER:-auto}"
+      fi
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - output/*.json
+      - output/*.md
+
+.module1_rules:
+  rules:
+    - changes:
+        - module1/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module2_rules:
+  rules:
+    - changes:
+        - module2/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module3_rules:
+  rules:
+    - changes:
+        - module3/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module4_rules:
+  rules:
+    - changes:
+        - module4/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module4_demo_rules:
+  rules:
+    - changes:
+        - module4/broken_app/**/*
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module5_rules:
+  rules:
+    - changes:
+        - module5/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module6_rules:
+  rules:
+    - changes:
+        - module6/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module7_rules:
+  rules:
+    - changes:
+        - module7/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+.module8_rules:
+  rules:
+    - changes:
+        - module8/**/*
+        - module4/broken_app/**/*
+        - shared/**/*
+        - requirements.txt
+        - .gitlab-ci.yml
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - when: never
+
+module1_agent:
+  extends:
+    - .python_agent
+    - .module1_rules
+  stage: agents
+  script:
+    - python module1/agent.py
+
+module2_agent:
+  extends:
+    - .python_agent
+    - .module2_rules
+  stage: agents
+  script:
+    - python module2/agent.py
+
+module3_agent:
+  extends:
+    - .python_agent
+    - .module3_rules
+  stage: agents
+  script:
+    - python module3/agent.py
+
+module4_agent:
+  extends:
+    - .python_agent
+    - .module4_rules
+  stage: agents
+  script:
+    - python module4/triage_agent.py
+
+module5_agent:
+  extends:
+    - .python_agent
+    - .module5_rules
+  stage: agents
+  script:
+    - python module5/triage_agent.py
+
+module6_agent:
+  extends:
+    - .python_agent
+    - .module6_rules
+  stage: agents
+  script:
+    - python module6/agent.py
+
+module7_agent:
+  extends:
+    - .python_agent
+    - .module7_rules
+  stage: agents
+  script:
+    - python module7/agent.py
+
+module4_broken_app_demo:
+  stage: demo_failure
+  extends: .module4_demo_rules
+  allow_failure: true
+  script:
+    - |
+      set +e
+      python module4/broken_app/app.py > broken_app.log 2>&1
+      status=$?
+      cat broken_app.log
+      exit $status
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - broken_app.log
+
+module4_broken_app_triage:
+  extends:
+    - .python_agent
+    - .module4_demo_rules
+  stage: demo_triage
+  needs:
+    - job: module4_broken_app_demo
+      artifacts: true
+      optional: true
+  script:
+    - |
+      python - <<'PY'
+      import json
+      import pathlib
+
+      sample_path = pathlib.Path("module4/sample_data.json")
+      sample = json.loads(sample_path.read_text())
+      log_path = pathlib.Path("broken_app.log")
+      log_lines = log_path.read_text().splitlines() if log_path.exists() else []
+      sample["ci_failure_log"] = log_lines[-30:]
+      sample["trigger"] = "ci_test_failure"
+      sample["failed_step"] = "module4_broken_app_demo"
+      sample_path.write_text(json.dumps(sample, indent=2))
+      print(f"Injected {len(log_lines)} log lines (trimmed to last 30)")
+      PY
+    - python module4/triage_agent.py
+
+module8_capstone:
+  extends:
+    - .python_agent
+    - .module8_rules
+  stage: capstone
+  script:
+    - python module8/platform_agent.py --simulate
+  artifacts:
+    when: always
+    expire_in: 7 days
+    paths:
+      - output/platform_agent_module8.json
+      - output/*.json
+      - output/*.md

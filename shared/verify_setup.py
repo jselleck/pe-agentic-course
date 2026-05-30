@@ -12,7 +12,7 @@ import importlib.util
 
 
 REQUIRED_PYTHON = (3, 10)
-REQUIRED_PACKAGES = ["anthropic"]
+REQUIRED_PACKAGES = ["anthropic", "openai"]
 
 
 def check_python():
@@ -23,13 +23,30 @@ def check_python():
     return ok
 
 
-def check_api_key():
-    key = os.environ.get("ANTHROPIC_API_KEY", "")
-    ok = bool(key and key.startswith("sk-"))
-    status = "✅" if ok else "❌"
-    hint = "" if ok else "  → Set with: export ANTHROPIC_API_KEY=your_key_here"
-    print(f"{status} ANTHROPIC_API_KEY{hint}")
-    return ok
+def check_api_keys():
+    provider = os.environ.get("AI_PROVIDER", "auto").lower()
+    anthropic_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    openai_key = os.environ.get("OPENAI_API_KEY", "")
+
+    anthropic_ok = bool(anthropic_key and anthropic_key.startswith("sk-"))
+    openai_ok = bool(openai_key and openai_key.startswith("sk-"))
+
+    def print_key(name, ok, hint):
+        status = "✅" if ok else "❌"
+        suffix = "" if ok else f"  → Set with: {hint}"
+        print(f"{status} {name}{suffix}")
+
+    print_key("ANTHROPIC_API_KEY", anthropic_ok, "export ANTHROPIC_API_KEY=your_key_here")
+    print_key("OPENAI_API_KEY", openai_ok, "export OPENAI_API_KEY=your_key_here")
+    print(f"ℹ️  AI_PROVIDER={provider}  (use anthropic, openai, or both)")
+
+    if provider in ("both", "compare", "comparison"):
+        return anthropic_ok and openai_ok
+    if provider in ("openai", "codex"):
+        return openai_ok
+    if provider in ("anthropic", "claude"):
+        return anthropic_ok
+    return anthropic_ok or openai_ok
 
 
 def check_packages():
@@ -64,7 +81,7 @@ def main():
     print("=" * 50)
     results = [
         check_python(),
-        check_api_key(),
+        check_api_keys(),
         check_packages(),
         check_gh_cli(),
     ]

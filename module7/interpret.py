@@ -111,7 +111,7 @@ def run_interpreter(orchestrator_output: dict) -> dict:
     """Call Claude to interpret and communicate the orchestrator's output."""
     if MOCK_MODE:
         print("[interpret] [MOCK MODE] Returning pre-defined interpretation.")
-        print("[interpret] Set ANTHROPIC_API_KEY and remove --mock to call the real API.\n")
+        print("[interpret] Set a provider API key and remove --mock to call the real API.\n")
         return MOCK_RESPONSE
 
     return ask(

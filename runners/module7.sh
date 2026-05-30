@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'; MAGENTA='\033[0;35m'; RED='\033[0;31m'
 BOLD='\033[1m'; NC='\033[0m'
 
 MOCK_MODE=false
-[[ -z "$ANTHROPIC_API_KEY" ]] && MOCK_MODE=true
+[[ -z "$ANTHROPIC_API_KEY" && -z "$OPENAI_API_KEY" ]] && MOCK_MODE=true
 
 press_enter() {
   echo ""; echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -152,7 +152,7 @@ press_enter
 
 # ────────────────────────────────────────────────────────────────────────────────
 if $MOCK_MODE; then
-  warn "SKIPPING live API calls (ANTHROPIC_API_KEY not set)"
+  warn "SKIPPING live API calls (ANTHROPIC_API_KEY and OPENAI_API_KEY not set)"
   warn "Live mode would:"
   warn "  1. Start gate_agent and rollback_agent in parallel threads"
   warn "  2. Wait for both to complete"

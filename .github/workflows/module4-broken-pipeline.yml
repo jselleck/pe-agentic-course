@@ -14,7 +14,7 @@ on:
   workflow_dispatch:          # Manual trigger for the live demo
   push:
     paths:
-      - 'module4/broken_app.py'  # Auto-trigger when broken_app.py is modified
+      - 'module4/broken_app/**'  # Auto-trigger when broken_app is modified
 
 permissions:
   contents: read
@@ -40,7 +40,7 @@ jobs:
         # continue-on-error so the triage job always runs
         continue-on-error: true
         run: |
-          python module4/broken_app.py 2>&1 | tee /tmp/broken_app.log
+          python module4/broken_app/app.py 2>&1 | tee /tmp/broken_app.log
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
 
       - name: Show raw failure log
@@ -72,7 +72,7 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install anthropic
+        run: pip install -r requirements.txt
 
       - name: Download failure log
         uses: actions/download-artifact@v4
@@ -97,7 +97,9 @@ jobs:
       - name: Run triage agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          MOCK_MODE: ${{ secrets.ANTHROPIC_API_KEY == '' && '1' || '0' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_PROVIDER: ${{ vars.AI_PROVIDER }}
+          MOCK_MODE: ${{ secrets.ANTHROPIC_API_KEY == '' && secrets.OPENAI_API_KEY == '' && '1' || '0' }}
         run: |
           echo "=== AGENT VIEW (structured diagnosis) ==="
           python module4/triage_agent.py

@@ -1,12 +1,13 @@
 """
 shared/output.py
 ----------------
-Format agent output as JSON, GitHub Step Summary markdown,
-and GitHub Issue body. Used by all module agent scripts.
+Format agent output as JSON, CI summary markdown, and issue body text.
+Used by all module agent scripts.
 """
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -27,11 +28,45 @@ def save_json(result: dict, module: int, label: str = "output") -> Path:
 
 def to_step_summary(result: dict, title: str = "Agent Result") -> str:
     """
-    Format result as GitHub Actions Step Summary markdown.
-    Write to $GITHUB_STEP_SUMMARY if running in CI.
+    Format result as CI summary markdown.
+    Writes to $GITHUB_STEP_SUMMARY on GitHub Actions, and to output/*.md on
+    GitLab CI so it can be uploaded as an artifact.
     Returns the markdown string in all cases.
     """
     _MAX_CELL = 120   # characters — keeps table rows readable in the GitHub UI
+
+    def _comparison_summary() -> str | None:
+        providers = ("anthropic", "openai")
+        if not all(provider in result for provider in providers):
+            return None
+        if not all(isinstance(result.get(provider), dict) for provider in providers):
+            return None
+
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        lines = [
+            f"## {title}",
+            f"_Generated: {ts}_",
+            "",
+            "| Provider | Status | Model | Summary | Confidence | Error |",
+            "|----------|--------|-------|---------|------------|-------|",
+        ]
+        for provider in providers:
+            entry = result[provider]
+            payload = entry.get("result") if isinstance(entry.get("result"), dict) else {}
+            summary = payload.get("summary", payload.get("diagnosis", payload.get("recommended_action", "")))
+            confidence = payload.get("confidence", "")
+            error = entry.get("error", "")
+            lines.append(
+                "| {provider} | {status} | {model} | {summary} | {confidence} | {error} |".format(
+                    provider=provider,
+                    status=entry.get("status", ""),
+                    model=entry.get("model", ""),
+                    summary=_format_val(summary),
+                    confidence=_format_val(confidence),
+                    error=_format_val(error),
+                )
+            )
+        return "\n".join(lines)
 
     def _format_val(v) -> str:
         if isinstance(v, bool):
@@ -41,6 +76,25 @@ def to_step_summary(result: dict, title: str = "Agent Result") -> str:
             return s[:_MAX_CELL] + "…" if len(s) > _MAX_CELL else s
         s = str(v)
         return s[:_MAX_CELL] + "…" if len(s) > _MAX_CELL else s
+
+    def _write_ci_summary(md: str) -> None:
+        summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary_path:
+            with open(summary_path, "a") as f:
+                f.write(md + "\n\n")
+
+        if os.environ.get("GITLAB_CI"):
+            out_dir = Path(__file__).parent.parent / "output"
+            out_dir.mkdir(exist_ok=True)
+            slug = re.sub(r"[^a-z0-9]+", "_", title.lower()).strip("_")
+            summary_file = out_dir / f"summary_{slug or 'agent_result'}.md"
+            summary_file.write_text(md + "\n")
+            print(f"[output] Summary saved → {summary_file}")
+
+    comparison_md = _comparison_summary()
+    if comparison_md:
+        _write_ci_summary(comparison_md)
+        return comparison_md
 
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines = [
@@ -60,10 +114,7 @@ def to_step_summary(result: dict, title: str = "Agent Result") -> str:
 
     md = "\n".join(lines)
 
-    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
-    if summary_path:
-        with open(summary_path, "a") as f:
-            f.write(md + "\n\n")
+    _write_ci_summary(md)
 
     return md
 

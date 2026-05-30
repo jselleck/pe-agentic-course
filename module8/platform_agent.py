@@ -475,7 +475,7 @@ def main():
 
     if MOCK_MODE:
         print("[MOCK MODE] Returning pre-defined 5-step pipeline report.")
-        print("[MOCK MODE] Remove --mock and set ANTHROPIC_API_KEY to run the real pipeline.\n")
+        print("[MOCK MODE] Remove --mock and set a provider API key to run the real pipeline.\n")
         result = MOCK_REPORT
     else:
         result = run_pipeline(event)

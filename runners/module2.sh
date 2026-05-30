@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'; MAGENTA='\033[0;35m'; RED='\033[0;31m'
 BOLD='\033[1m'; NC='\033[0m'
 
 MOCK_MODE=false
-[[ -z "$ANTHROPIC_API_KEY" ]] && MOCK_MODE=true
+[[ -z "$ANTHROPIC_API_KEY" && -z "$OPENAI_API_KEY" ]] && MOCK_MODE=true
 
 press_enter() {
   echo ""; echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -51,9 +51,9 @@ echo ""
 }
 
 if $MOCK_MODE; then
-  note "Running in MOCK MODE (ANTHROPIC_API_KEY not set)"
+  note "Running in MOCK MODE (ANTHROPIC_API_KEY and OPENAI_API_KEY not set)"
 else
-  note "ANTHROPIC_API_KEY is set — live API calls enabled"
+  note "Provider API key is set — live API calls enabled"
 fi
 
 echo ""

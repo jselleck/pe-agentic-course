@@ -15,13 +15,18 @@ This repository contains the hands-on exercise code for every module of the cour
 git clone https://github.com/YOUR_USERNAME/pe-agentic-course.git
 cd pe-agentic-course
 
-# 2. Set your API key
+# 2. Set one or both API keys
 export ANTHROPIC_API_KEY=sk-ant-...
+# export OPENAI_API_KEY=sk-...
 
-# 3. Verify your environment
+# 3. Pick the live provider when you run without --mock
+#    Options: anthropic, openai, both
+export AI_PROVIDER=anthropic
+
+# 4. Verify your environment
 python shared/verify_setup.py
 
-# 4. Run a module exercise (example: Module 2)
+# 5. Run a module exercise (example: Module 2)
 python module2/agent.py
 ```
 
@@ -32,7 +37,8 @@ python module2/agent.py
 ```
 .
 ├── shared/                     # Common utilities — do not modify
-│   ├── claude_client.py        # ask() function — wraps Anthropic API
+│   ├── claude_client.py        # ask() compatibility shim
+│   ├── llm_client.py           # ask() function — Anthropic/OpenAI/compare
 │   ├── output.py               # JSON, Step Summary, and GitHub Issue formatters
 │   └── verify_setup.py         # Pre-flight environment check
 │
@@ -49,6 +55,7 @@ python module2/agent.py
 │   ├── module1-hello-agent.yml
 │   ├── module2-first-agent.yml
 │   └── ...
+├── .gitlab-ci.yml              # GitLab CI jobs for the same module runs
 │
 ├── output/                     # Agent output JSON from previous runs (for comparison)
 └── docs/                       # Architecture diagrams and reference guides
@@ -70,9 +77,28 @@ python module2/agent.py
 | Requirement | Version | Notes |
 |-------------|---------|-------|
 | Python | ≥ 3.10 | |
-| anthropic SDK | latest | `pip install anthropic` |
+| anthropic SDK | latest | Installed by `pip install -r requirements.txt` |
+| openai SDK | latest | Installed by `pip install -r requirements.txt` |
 | GitHub CLI (`gh`) | any | Optional — needed for Modules 7–8 |
-| ANTHROPIC_API_KEY | — | Set as env var or GitHub Secret |
+| ANTHROPIC_API_KEY | — | Required for `AI_PROVIDER=anthropic` or `both` |
+| OPENAI_API_KEY | — | Required for `AI_PROVIDER=openai` or `both` |
+| AI_PROVIDER | `auto` | `anthropic`, `openai`, or `both` |
+
+## Provider Modes
+
+The exercises still call one helper: `ask(system, user, model, max_tokens)`.
+Choose the live backend with `AI_PROVIDER`:
+
+```bash
+AI_PROVIDER=anthropic python module2/triage_agent.py
+AI_PROVIDER=openai python module2/triage_agent.py
+AI_PROVIDER=both python module2/triage_agent.py
+```
+
+`AI_PROVIDER=both` runs the same prompt against both providers and saves a
+side-by-side JSON result. If `AI_PROVIDER` is unset, the client uses OpenAI only
+when `OPENAI_API_KEY` is set and `ANTHROPIC_API_KEY` is not; otherwise it keeps
+the original Anthropic default.
 
 ---
 
@@ -80,7 +106,19 @@ python module2/agent.py
 
 Each module has a corresponding workflow in `.github/workflows/`. Workflows trigger on push to the relevant `moduleN/**` path and run the agent against the sample data. Output JSON is uploaded as an artifact for comparison.
 
-To enable CI for your fork: add `ANTHROPIC_API_KEY` as a repository secret in **Settings → Secrets and variables → Actions**.
+To enable CI for your fork: add `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or both as repository secrets in **Settings → Secrets and variables → Actions**. To compare both in CI, add a repository variable named `AI_PROVIDER` with the value `both`.
+
+## GitLab CI
+
+The root `.gitlab-ci.yml` runs the same module agents in GitLab without sharing
+or generating config from GitHub Actions. Jobs run automatically when their
+module path or `shared/**` changes, and they can also be started manually from
+GitLab's **Run pipeline** page.
+
+Add `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, and optional `AI_PROVIDER` as GitLab
+CI/CD variables. If no provider key is set, jobs fall back to `MOCK_MODE=1`.
+Outputs are uploaded as GitLab job artifacts from `output/*.json` and
+`output/*.md`.
 
 ---
 

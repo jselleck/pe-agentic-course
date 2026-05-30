@@ -6,7 +6,7 @@ Run this before starting any exercise:
 
     python module1/verify_setup.py
 
-Checks Python version, ANTHROPIC_API_KEY, required packages, and the
+Checks Python version, model-provider API keys, required packages, and the
 optional GitHub CLI (gh) used in later modules.
 """
 
