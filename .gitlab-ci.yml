@@ -145,7 +145,7 @@ module2_agent:
     - .module2_rules
   stage: agents
   script:
-    - python module2/agent.py
+    - python module2/agent.py --mock
 
 module3_agent:
   extends:
@@ -153,7 +153,7 @@ module3_agent:
     - .module3_rules
   stage: agents
   script:
-    - python module3/agent.py
+    - python module3/agent.py --mock
 
 module4_agent:
   extends:
@@ -161,7 +161,7 @@ module4_agent:
     - .module4_rules
   stage: agents
   script:
-    - python module4/triage_agent.py
+    - python module4/triage_agent.py --mock
 
 module5_agent:
   extends:
@@ -229,7 +229,7 @@ module4_broken_app_triage:
       sample_path.write_text(json.dumps(sample, indent=2))
       print(f"Injected {len(log_lines)} log lines (trimmed to last 30)")
       PY
-    - python module4/triage_agent.py
+    - python module4/triage_agent.py --mock
 
 module8_capstone:
   extends:
