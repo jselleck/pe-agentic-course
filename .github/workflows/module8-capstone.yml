@@ -44,9 +44,9 @@ jobs:
           MOCK_MODE: ${{ secrets.ANTHROPIC_API_KEY == '' && secrets.OPENAI_API_KEY == '' && '1' || '0' }}
         run: |
           if [ "${{ github.event.inputs.simulate }}" = "false" ]; then
-            python module8/platform_agent.py
+            python module8/platform_agent.py --mock
           else
-            python module8/platform_agent.py --simulate
+            python module8/platform_agent.py --mock --simulate
           fi
 
       - name: Upload output artifact

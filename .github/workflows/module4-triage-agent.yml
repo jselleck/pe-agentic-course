@@ -31,7 +31,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           AI_PROVIDER: ${{ vars.AI_PROVIDER }}
           MOCK_MODE: ${{ secrets.ANTHROPIC_API_KEY == '' && secrets.OPENAI_API_KEY == '' && '1' || '0' }}
-        run: python module4/triage_agent.py
+        run: python module4/triage_agent.py --mock
 
       - name: Upload output artifact
         if: always()

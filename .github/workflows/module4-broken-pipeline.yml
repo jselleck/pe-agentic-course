@@ -102,7 +102,7 @@ jobs:
           MOCK_MODE: ${{ secrets.ANTHROPIC_API_KEY == '' && secrets.OPENAI_API_KEY == '' && '1' || '0' }}
         run: |
           echo "=== AGENT VIEW (structured diagnosis) ==="
-          python module4/triage_agent.py
+          python module4/triage_agent.py --mock
 
       - name: Upload triage output
         if: always()
