@@ -55,7 +55,21 @@ MOCK_RESPONSE = {
 #
 # Hint: be explicit about when escalate should be true vs false.
 # Check solutions/solution.py only after you have made your own attempt.
-SYSTEM_PROMPT = ""  # Replace this empty string with your prompt
+SYSTEM_PROMPT = """You are a CI/CD triage agent. Analyze the build log provided by the user and diagnose the failure.
+
+Return ONLY a valid JSON object with exactly these keys:
+{
+  "summary": "one sentence describing what failed",
+  "likely_cause": "one sentence on the root cause",
+  "next_step": "one concrete remediation action",
+  "confidence": "HIGH|MEDIUM|LOW",
+  "escalate": false
+}
+
+confidence is HIGH only when the root cause is directly visible in the log.
+Use MEDIUM when inferring state, LOW when the log is ambiguous.
+Set escalate to true only when the issue needs human intervention, such as missing credentials, unavailable external services, permission or security issues, unclear infrastructure outages, or insufficient evidence for a safe remediation. Set escalate to false when the log supports a concrete code, test, dependency, or configuration fix.
+Do not include markdown, prose, code fences, or any keys outside the schema."""
 
 
 def load_sample() -> str:
