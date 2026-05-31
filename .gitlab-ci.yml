@@ -237,7 +237,7 @@ module8_capstone:
     - .module8_rules
   stage: capstone
   script:
-    - python module8/platform_agent.py --simulate
+    - python module8/platform_agent.py --mock --simulate
   artifacts:
     when: always
     expire_in: 7 days
