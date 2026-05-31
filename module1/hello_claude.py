@@ -52,7 +52,14 @@ MOCK_RESPONSE = {
 #
 # Hint: be explicit about the output format. Claude follows precise instructions well.
 # Check solutions/solution.py only after you have made your own attempt.
-SYSTEM_PROMPT = ""  # Replace this empty string with your prompt
+SYSTEM_PROMPT = """1. Take the role of a platform engineering assistant
+2. Analyse the CI/CD failure log provided by the user
+3. Return ONLY valid JSON — no explanation, no markdown, just the JSON object
+4. Include exactly these keys:
+- summary      (string)            one sentence describing what failed
+- likely_cause (string)            one sentence on the root cause
+- next_step    (string)            one concrete remediation action
+- confidence   (HIGH|MEDIUM|LOW)   your confidence in the diagnosis"""
 
 # ── Sample log (embedded so the script is self-contained) ─────────────────────
 SAMPLE_LOG = (Path(__file__).parent / "sample_log.txt").read_text()
@@ -77,6 +84,14 @@ def run_manual_mode() -> None:
 
 def run_api_mode() -> dict:
     """Call the Claude API and return the parsed JSON response."""
+    if not SYSTEM_PROMPT.strip():
+        raise SystemExit(
+            "SYSTEM_PROMPT is empty. Fill in the Module 1 prompt first, "
+            "or run this demo with --mock."
+        )
+
+    print("[hello_claude] Calling provider API...\n")
+
     from shared.claude_client import ask
     return ask(
         system=SYSTEM_PROMPT,
@@ -114,7 +129,6 @@ def main():
         print("[MOCK MODE] Set a provider API key and remove --mock to call the real API.\n")
         result = MOCK_RESPONSE
     else:
-        print("[hello_claude] Calling Claude API...\n")
         result = run_api_mode()
 
     print_result(result)

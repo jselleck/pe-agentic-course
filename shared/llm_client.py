@@ -14,7 +14,7 @@ from typing import Any
 
 
 ANTHROPIC_DEFAULT_MODEL = "claude-opus-4-5-20251101"
-OPENAI_DEFAULT_MODEL = "gpt-5.4-mini"
+OPENAI_DEFAULT_MODEL = "gpt-5.4-nano"
 
 _anthropic_client = None
 _openai_client = None
